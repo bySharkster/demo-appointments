@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 export const createClient = () => {
@@ -24,6 +25,17 @@ export const createClient = () => {
           }
         },
       },
-    },
+    }
   );
+};
+
+export const getUserRole = async (supabase: SupabaseClient, userId: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("roles(name)")
+    .eq("id", userId)
+    .single();
+
+  if (error) throw error;
+  return data?.roles?.[0]?.name;
 };
