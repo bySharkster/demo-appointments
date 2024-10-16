@@ -128,16 +128,24 @@ export async function updateAppointmentStatus(
   // Get user role
   const { data: profile } = await supabase
     .from("profiles")
-    .select("roles(role_name)")
+    .select("role_id")
     .eq("id", user.id)
     .single();
 
   if (!profile) throw new Error("User profile not found");
 
+  const { data: userRole } = await supabase
+    .from("roles")
+    .select("role_name")
+    .eq("role_id", profile.role_id)
+    .single();
+
+  if (!userRole) throw new Error("User role not found");
+
   // Check permissions based on status and user role
   if (
     (status === "CONFIRMED" || status === "CLOSED") &&
-    !["Vendor", "Admin"].includes(profile.roles.role_name)
+    !["Vendor", "Admin"].includes(userRole.role_name)
   ) {
     throw new Error("Unauthorized to perform this action");
   }
@@ -187,11 +195,20 @@ export async function assignAppointment(
   // Get user role
   const { data: profile } = await supabase
     .from("profiles")
-    .select("roles(role_name)")
+    .select("role_id")
     .eq("id", user.id)
     .single();
 
-  if (!profile || !["Coordinator", "Admin"].includes(profile.roles.role_name)) {
+  if (!profile) throw new Error("User profile not found");
+
+  const { data: userRole } = await supabase
+    .from("roles")
+    .select("role_name")
+    .eq("role_id", profile.role_id)
+    .single();
+
+  if (!userRole) throw new Error("User role not found");
+  if (!profile || !["Coordinator", "Admin"].includes(userRole.role_name)) {
     throw new Error("Unauthorized to perform this action");
   }
 
